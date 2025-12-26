@@ -1,0 +1,16 @@
+node_modules
+.next
+.env
+.env.*
+frontend/.next
+frontend/node_modules
+backend/__pycache__/
+backend/.venv/
+backend/.mypy_cache/
+backend/data.db
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+backend/tmp_test.db
