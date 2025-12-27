@@ -3,11 +3,13 @@
 import { CheckCircle2, MessageSquare, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { apiDevFeedback } from "@/lib/api";
+import { apiDevFeedback, DevFeedbackPayload } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { CardContainer } from "../dashboard/ui";
 
-const categories = [
+type DevFeedbackCategory = DevFeedbackPayload["category"];
+
+const categories: Array<{ value: DevFeedbackCategory; label: string }> = [
   { value: "suggestion", label: "Proposition de changement" },
   { value: "bug", label: "Bug rencontré" },
   { value: "question", label: "Question d'usage" },
@@ -25,7 +27,7 @@ type ToastMessage = {
 
 export default function CommentairesDevPage() {
   const token = useAuthStore((state) => state.token);
-  const [category, setCategory] = useState(categories[0].value);
+  const [category, setCategory] = useState<DevFeedbackCategory>(categories[0].value);
   const [summary, setSummary] = useState("");
   const [details, setDetails] = useState("");
   const [repro, setRepro] = useState("");
@@ -90,7 +92,10 @@ export default function CommentairesDevPage() {
       const parsed = JSON.parse(stored);
       if (parsed.summary) setSummary(parsed.summary);
       if (parsed.details) setDetails(parsed.details);
-      if (parsed.category) setCategory(parsed.category);
+      const storedCategory = parsed.category as DevFeedbackCategory;
+      if (categories.some((option) => option.value === storedCategory)) {
+        setCategory(storedCategory);
+      }
       if (parsed.reproduction) setRepro(parsed.reproduction);
       if (parsed.contact) setContact(parsed.contact);
     } catch (error) {
@@ -176,7 +181,7 @@ export default function CommentairesDevPage() {
             Catégorie
             <select
               value={category}
-              onChange={(event) => setCategory(event.target.value)}
+              onChange={(event) => setCategory(event.target.value as DevFeedbackCategory)}
               className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-400"
             >
               {categories.map((option) => (
