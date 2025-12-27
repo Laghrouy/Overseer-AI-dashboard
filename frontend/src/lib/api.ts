@@ -169,7 +169,7 @@ type CreateProjectPayload = {
   dependencies?: string[];
 };
 type UpdateProjectPayload = Partial<CreateProjectPayload>;
-type CreateEventPayload = {
+export type CreateEventPayload = {
   title: string;
   start: string;
   end: string;

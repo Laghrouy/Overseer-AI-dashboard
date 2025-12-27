@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState, type ChangeEvent } from "react";
 import Fuse from "fuse.js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiAgentChat, apiChatSummary, apiCreateEvent, apiDeleteEvent, apiEvents, apiExportIcs, apiImportIcs, apiUpdateEvent } from "@/lib/api";
+import { apiAgentChat, apiChatSummary, apiCreateEvent, apiDeleteEvent, apiEvents, apiExportIcs, apiImportIcs, apiUpdateEvent, type CreateEventPayload } from "@/lib/api";
 import type { AgendaEvent, ChatMessage } from "@/lib/types";
 import { isSameDay, computeLoad, startOfWeek, inRange, computeDailyLoads, startOfDay } from "@/lib/timeUtils";
 import { useAuthStore } from "@/store/auth";
@@ -78,22 +78,36 @@ export function useAgendaController() {
     [selectedDate]
   );
 
+  type UpdateEventVariables = {
+    id: string;
+    payload: Partial<CreateEventPayload>;
+  };
+
   const createEvent = useMutation({
-    mutationFn: apiCreateEvent,
+    mutationFn: (payload: CreateEventPayload) => {
+      if (!token) throw new Error("Token manquant pour les événements");
+      return apiCreateEvent(token, payload);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events", token] });
     },
   });
 
   const updateEvent = useMutation({
-    mutationFn: apiUpdateEvent,
+    mutationFn: ({ id, payload }: UpdateEventVariables) => {
+      if (!token) throw new Error("Token manquant pour les événements");
+      return apiUpdateEvent(token, Number(id), payload);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events", token] });
     },
   });
 
   const deleteEvent = useMutation({
-    mutationFn: apiDeleteEvent,
+    mutationFn: (id: string) => {
+      if (!token) throw new Error("Token manquant pour les événements");
+      return apiDeleteEvent(token, Number(id));
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events", token] });
     },

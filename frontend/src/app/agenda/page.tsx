@@ -55,7 +55,7 @@ export default function AgendaPage() {
       note: draftNote || null,
     };
     if (editingEvent) {
-      ctrl.updateEvent.mutate({ id: editingEvent.id, ...payload, kind: editingEvent.type });
+      ctrl.updateEvent.mutate({ id: editingEvent.id, payload: { ...payload, kind: editingEvent.type } });
     } else {
       ctrl.createEvent.mutate({ ...payload, kind: "fixe" });
     }
