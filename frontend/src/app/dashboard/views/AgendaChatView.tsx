@@ -40,6 +40,8 @@ export function AgendaChatView(props: {
   setPendingMessage: (v: string | null) => void;
   summaryText: string | null;
   chatMutationLoading: boolean;
+  layout?: "column" | "row";
+  showAgendaCard?: boolean;
 }) {
   const {
     token,
@@ -48,18 +50,14 @@ export function AgendaChatView(props: {
     viewMode,
     setViewMode,
     eventsLoading,
-    dayEvents: _dayEvents,
-    filteredEvents: _filteredEvents,
     viewModeRender,
     setShowAddModal,
     setShowSearchModal,
     handleIcsUpload,
     importIcsLoading,
     exportIcs,
-    handleDeleteEvent: _handleDeleteEvent,
-    openEditModal: _openEditModal,
-    setViewModeDay,
     shiftDate,
+    setViewModeDay,
     handleSendChat,
     chatSummary,
     chatTone,
@@ -68,101 +66,114 @@ export function AgendaChatView(props: {
     chatInput,
     setChatInput,
     clarifyPrompt,
-    pendingMessage: _pendingMessage,
     confirmSendPending,
     setClarifyPrompt,
     setPendingMessage,
     summaryText,
     chatMutationLoading,
   } = props;
+  const layout = props.layout ?? "column";
+  const showAgendaCard = props.showAgendaCard ?? true;
+  const isRowLayout = layout === "row" && showAgendaCard;
+  const containerClass = isRowLayout ? "grid gap-6 lg:grid-cols-3" : "flex flex-col gap-6";
+  const agendaCardClass = isRowLayout ? "lg:col-span-2" : "";
+  const chatCardClass = isRowLayout ? "lg:col-span-1" : "";
 
   return (
-    <section className="grid gap-6 lg:grid-cols-3">
-      <CardContainer title="Agenda du jour" icon={<CalendarClock className="h-5 w-5 text-blue-600" />} className="lg:col-span-2">
-        <div className="flex flex-col gap-3">
-          {token ? (
-            <p className="text-xs text-slate-500">Agenda chargé depuis l'API.</p>
-          ) : (
-            <p className="text-xs text-slate-500">Connectez-vous pour voir vos événements synchronisés.</p>
-          )}
-          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 font-semibold transition hover:border-slate-300 hover:shadow-sm">
-              <input type="file" accept=".ics,text/calendar" className="hidden" onChange={handleIcsUpload} />
-              <Sparkles className="h-4 w-4" />
-              Importer un ICS
-            </label>
-            {importIcsLoading ? <span>Import en cours...</span> : null}
-            <button
-              onClick={() => exportIcs.mutate()}
-              disabled={!token || exportIcs.status === "pending"}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 font-semibold transition hover:border-slate-300 hover:shadow-sm disabled:opacity-60"
-            >
-              Exporter agenda
-            </button>
-            <div className="ml-auto flex flex-wrap items-center gap-2">
-              <input
-                type="date"
-                value={selectedDate.toISOString().slice(0, 10)}
-                onChange={(e) => setSelectedDate(new Date(e.target.value))}
-                className="rounded-md border border-slate-200 px-3 py-1 text-xs"
-              />
-              <div className="flex rounded-md border border-slate-200 text-xs font-semibold text-slate-700">
-                {([
-                  ["jour", "Jour"],
-                  ["semaine", "Semaine"],
-                  ["mois", "Mois"],
-                  ["annee", "Année"],
-                  ["liste", "Liste"],
-                ] as const).map(([key, label]) => (
-                  <button
-                    key={key}
-                    onClick={() => setViewMode(key)}
-                    className={`px-2 py-1 ${viewMode === key ? "bg-slate-900 text-white" : "bg-transparent"}`}
-                  >
-                    {label}
+    <section className={containerClass}>
+      {showAgendaCard && (
+        <CardContainer
+          title="Agenda du jour"
+          icon={<CalendarClock className="h-5 w-5 text-blue-600" />}
+          className={agendaCardClass}
+        >
+          <div className="flex flex-col gap-3">
+            {token ? (
+              <p className="text-xs text-slate-500">Agenda chargé depuis l'API.</p>
+            ) : (
+              <p className="text-xs text-slate-500">Connectez-vous pour voir vos événements synchronisés.</p>
+            )}
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 font-semibold transition hover:border-slate-300 hover:shadow-sm">
+                <input type="file" accept=".ics,text/calendar" className="hidden" onChange={handleIcsUpload} />
+                <Sparkles className="h-4 w-4" />
+                Importer un ICS
+              </label>
+              {importIcsLoading ? <span>Import en cours...</span> : null}
+              <button
+                onClick={() => exportIcs.mutate()}
+                disabled={!token || exportIcs.status === "pending"}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 font-semibold transition hover:border-slate-300 hover:shadow-sm disabled:opacity-60"
+              >
+                Exporter agenda
+              </button>
+              <div className="ml-auto flex flex-wrap items-center gap-2">
+                <input
+                  type="date"
+                  value={selectedDate.toISOString().slice(0, 10)}
+                  onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                  className="rounded-md border border-slate-200 px-3 py-1 text-xs"
+                />
+                <div className="flex rounded-md border border-slate-200 text-xs font-semibold text-slate-700">
+                  {([
+                    ["jour", "Jour"],
+                    ["semaine", "Semaine"],
+                    ["mois", "Mois"],
+                    ["annee", "Année"],
+                    ["liste", "Liste"],
+                  ] as const).map(([key, label]) => (
+                    <button
+                      key={key}
+                      onClick={() => setViewMode(key)}
+                      className={`px-2 py-1 ${viewMode === key ? "bg-slate-900 text-white" : "bg-transparent"}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex rounded-md border border-slate-200 text-xs font-semibold text-slate-700">
+                  <button onClick={() => shiftDate(viewMode, -1)} className="px-2 py-1">
+                    ◀
                   </button>
-                ))}
-              </div>
-              <div className="flex rounded-md border border-slate-200 text-xs font-semibold text-slate-700">
-                <button onClick={() => shiftDate(viewMode, -1)} className="px-2 py-1">
-                  ◀
-                </button>
-                <button onClick={setViewModeDay} className="px-2 py-1">
-                  Aujourd'hui
-                </button>
-                <button onClick={() => shiftDate(viewMode, 1)} className="px-2 py-1">
-                  ▶
-                </button>
+                  <button onClick={setViewModeDay} className="px-2 py-1">
+                    Aujourd'hui
+                  </button>
+                  <button onClick={() => shiftDate(viewMode, 1)} className="px-2 py-1">
+                    ▶
+                  </button>
+                </div>
               </div>
             </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-700">
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm"
+              >
+                Ajouter
+              </button>
+              <button
+                onClick={() => setShowSearchModal(true)}
+                className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm"
+              >
+                Rechercher
+              </button>
+            </div>
+            {eventsLoading ? (
+              <p className="text-sm text-slate-600">Chargement de l'agenda...</p>
+            ) : (
+              viewModeRender
+            )}
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-700">
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm"
-            >
-              Ajouter
-            </button>
-            <button
-              onClick={() => setShowSearchModal(true)}
-              className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm"
-            >
-              Rechercher
-            </button>
-          </div>
-          {eventsLoading ? (
-            <p className="text-sm text-slate-600">Chargement de l'agenda...</p>
-          ) : viewModeRender}
-        </div>
-      </CardContainer>
+        </CardContainer>
+      )}
 
-      <CardContainer title="Chat avec l'agent" icon={<MessageCircle className="h-5 w-5 text-amber-600" />} className="lg:col-span-1">
+      <CardContainer title="Chat avec l'agent" icon={<MessageCircle className="h-5 w-5 text-amber-600" />} className={chatCardClass}>
         <div className="flex h-full flex-col gap-3">
           <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
             <div className="flex items-center gap-2">
               <span className="font-semibold">Ton</span>
               <div className="flex rounded-md border border-slate-200">
-                {["formel", "detendu"].map((tone) => (
+                {(["formel", "detendu"] as const).map((tone) => (
                   <button
                     key={tone}
                     onClick={() => setChatTone(tone as typeof chatTone)}

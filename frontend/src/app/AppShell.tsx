@@ -17,6 +17,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     { href: "/automations", label: "Automations" },
     { href: "/commands", label: "Commandes" },
     { href: "/feedback", label: "Feedback" },
+    { href: "/commentaires-dev", label: "Commentaires dev" },
+    { href: "/admin/dev-comments", label: "Admin commentaires" },
     { href: "/links", label: "Liens" },
     { href: "/settings", label: "Paramètres" },
   ];

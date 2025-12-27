@@ -90,6 +90,25 @@ type AutomationRollbackResponse = { status: string; detail: string; created_at: 
 type CommandRequest = { command: string; args?: string[] };
 type CommandResponse = { status: string; output: string; created_at: string };
 
+export type DevFeedbackPayload = {
+  category: "suggestion" | "bug" | "question" | "autre";
+  summary: string;
+  details: string;
+  reproduction?: string;
+  contact?: string;
+};
+
+export type DevFeedbackResponse = {
+  id: string;
+  owner_id: number;
+  category: DevFeedbackPayload["category"];
+  summary: string;
+  details: string;
+  reproduction?: string;
+  contact?: string;
+  created_at: string;
+};
+
 type ApiStudySubject = {
   id: number;
   name: string;
@@ -378,6 +397,19 @@ export async function apiChatSummary(token: string, messages: { role: string; co
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message: "Résumé de conversation", history: messages }),
   });
+}
+
+export async function apiDevFeedback(token: string, payload: DevFeedbackPayload): Promise<DevFeedbackResponse> {
+  return authFetch<DevFeedbackResponse>("/feedback/comments", token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function apiDevFeedbackList(token: string, category?: DevFeedbackPayload["category"]): Promise<DevFeedbackResponse[]> {
+  const query = category ? `?category=${category}` : "";
+  return authFetch<DevFeedbackResponse[]>(`/feedback/comments${query}`, token);
 }
 
 export async function apiUserPreferencesGet(token: string): Promise<UserPreference> {

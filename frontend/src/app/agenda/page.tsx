@@ -78,56 +78,36 @@ export default function AgendaPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 rounded-full bg-slate-900 px-3 py-2 text-white">
-          <CalendarClock className="h-4 w-4" />
-          <span className="text-sm font-semibold">Agenda</span>
-        </div>
-        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700">
-          <button onClick={() => ctrl.shiftDate(ctrl.viewMode, -1)} className="flex items-center gap-1 px-2 py-1">
-            <ArrowLeft className="h-3.5 w-3.5" /> Précédent
-          </button>
-          <button onClick={() => ctrl.setSelectedDate(new Date())} className="px-2 py-1 font-semibold">
-            Aujourd'hui
-          </button>
-          <button onClick={() => ctrl.shiftDate(ctrl.viewMode, 1)} className="flex items-center gap-1 px-2 py-1">
-            Suivant <ArrowRight className="h-3.5 w-3.5" />
-          </button>
-        </div>
-        <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700">
-          {(["jour", "semaine", "mois", "annee", "liste"] as AgendaViewMode[]).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => ctrl.setViewMode(mode)}
-              className={`rounded-full px-2 py-1 ${ctrl.viewMode === mode ? "bg-slate-900 text-white" : "text-slate-700"}`}
-            >
-              {labelView(mode)}
+      <header className="space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 rounded-full bg-slate-900 px-3 py-2 text-white">
+            <CalendarClock className="h-4 w-4" />
+            <span className="text-sm font-semibold">Agenda</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700">
+            <button onClick={() => ctrl.shiftDate(ctrl.viewMode, -1)} className="flex items-center gap-1 px-2 py-1">
+              <ArrowLeft className="h-3.5 w-3.5" /> Précédent
             </button>
-          ))}
+            <button onClick={() => ctrl.setSelectedDate(new Date())} className="px-2 py-1 font-semibold">
+              Aujourd'hui
+            </button>
+            <button onClick={() => ctrl.shiftDate(ctrl.viewMode, 1)} className="flex items-center gap-1 px-2 py-1">
+              Suivant <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700">
+            {(["jour", "semaine", "mois", "annee", "liste"] as AgendaViewMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => ctrl.setViewMode(mode)}
+                className={`rounded-full px-2 py-1 ${ctrl.viewMode === mode ? "bg-slate-900 text-white" : "text-slate-700"}`}
+              >
+                {labelView(mode)}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <button
-            onClick={openCreate}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm"
-          >
-            <Plus className="h-4 w-4" /> Ajouter
-          </button>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm">
-            <Sparkles className="h-4 w-4" /> Importer ICS
-            <input type="file" accept=".ics,text/calendar" className="hidden" onChange={ctrl.handleIcsUpload} />
-          </label>
-          <button
-            onClick={() => ctrl.exportIcs.mutate()}
-            disabled={!ctrl.token || ctrl.exportIcs.status === "pending"}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm disabled:opacity-60"
-          >
-            Exporter
-          </button>
-        </div>
-      </header>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <section className="lg:col-span-2 space-y-3">
+        <div className="flex flex-wrap items-center gap-3 justify-between">
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
             <input
               type="date"
@@ -161,68 +141,91 @@ export default function AgendaPage() {
                 Proposé
               </label>
             </div>
-            <div className="ml-auto flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs">
+            <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs">
               <Search className="h-3.5 w-3.5" />
               <input
                 value={ctrl.searchQuery}
                 onChange={(e) => ctrl.setSearchQuery(e.target.value)}
-                className="border-none text-sm outline-none"
+                className="min-w-[150px] border-none text-sm outline-none"
                 placeholder="Rechercher"
               />
             </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            {ctrl.eventsLoading ? <p className="text-sm text-slate-600">Chargement de l'agenda...</p> : agendaViewModeRender}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={openCreate}
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm"
+            >
+              <Plus className="h-4 w-4" /> Ajouter
+            </button>
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm">
+              <Sparkles className="h-4 w-4" /> Importer ICS
+              <input type="file" accept=".ics,text/calendar" className="hidden" onChange={ctrl.handleIcsUpload} />
+            </label>
+            <button
+              onClick={() => ctrl.exportIcs.mutate()}
+              disabled={!ctrl.token || ctrl.exportIcs.status === "pending"}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm disabled:opacity-60"
+            >
+              Exporter
+            </button>
           </div>
-          {ctrl.searchQuery.trim() && ctrl.searchResults.length ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold text-slate-600">Résultats</p>
-              <div className="mt-2 flex flex-col gap-2">
-                {ctrl.searchResults.map((evt) => (
-                  <AgendaItem key={evt.id} event={evt} onEdit={() => openEdit(evt)} onDelete={() => confirmDelete(evt.id)} />
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </section>
+        </div>
+      </header>
 
-        <section className="lg:col-span-1">
-          <AgendaChatView
-            token={ctrl.token}
-            selectedDate={ctrl.selectedDate}
-            setSelectedDate={ctrl.setSelectedDate}
-            viewMode={ctrl.viewMode}
-            setViewMode={ctrl.setViewMode}
-            eventsLoading={ctrl.eventsLoading}
-            dayEvents={ctrl.dayEvents}
-            filteredEvents={ctrl.eventsData}
-            viewModeRender={agendaViewModeRender}
-            setShowAddModal={setShowAddModal}
-            setShowSearchModal={() => {}}
-            handleIcsUpload={ctrl.handleIcsUpload}
-            importIcsLoading={ctrl.importIcs.status === "pending"}
-            exportIcs={ctrl.exportIcs}
-            handleDeleteEvent={ctrl.handleDeleteEvent}
-            openEditModal={openEdit}
-            setViewModeDay={() => ctrl.setSelectedDate(new Date())}
-            shiftDate={ctrl.shiftDate}
-            handleSendChat={() => ctrl.chatMutation.mutate()}
-            chatSummary={ctrl.chatSummary}
-            chatTone={ctrl.chatTone}
-            setChatTone={ctrl.setChatTone}
-            chatHistory={ctrl.chatHistory}
-            chatInput={ctrl.chatInput}
-            setChatInput={ctrl.setChatInput}
-            clarifyPrompt={ctrl.clarifyPrompt}
-            pendingMessage={ctrl.pendingMessage}
-            confirmSendPending={ctrl.confirmSendPending}
-            setClarifyPrompt={ctrl.setClarifyPrompt}
-            setPendingMessage={ctrl.setPendingMessage}
-            summaryText={ctrl.summaryText}
-            chatMutationLoading={ctrl.chatMutation.status === "pending"}
-          />
-        </section>
-      </div>
+      <section className="space-y-3">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          {ctrl.eventsLoading ? <p className="text-sm text-slate-600">Chargement de l'agenda...</p> : agendaViewModeRender}
+        </div>
+        {ctrl.searchQuery.trim() && ctrl.searchResults.length ? (
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold text-slate-600">Résultats</p>
+            <div className="mt-2 flex flex-col gap-2">
+              {ctrl.searchResults.map((evt) => (
+                <AgendaItem key={evt.id} event={evt} onEdit={() => openEdit(evt)} onDelete={() => confirmDelete(evt.id)} />
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </section>
+
+      <section>
+        <AgendaChatView
+          token={ctrl.token}
+          selectedDate={ctrl.selectedDate}
+          setSelectedDate={ctrl.setSelectedDate}
+          viewMode={ctrl.viewMode}
+          setViewMode={ctrl.setViewMode}
+          eventsLoading={ctrl.eventsLoading}
+          dayEvents={ctrl.dayEvents}
+          filteredEvents={ctrl.eventsData}
+          viewModeRender={agendaViewModeRender}
+          setShowAddModal={setShowAddModal}
+          setShowSearchModal={() => {}}
+          handleIcsUpload={ctrl.handleIcsUpload}
+          importIcsLoading={ctrl.importIcs.status === "pending"}
+          exportIcs={ctrl.exportIcs}
+          handleDeleteEvent={ctrl.handleDeleteEvent}
+          openEditModal={openEdit}
+          setViewModeDay={() => ctrl.setSelectedDate(new Date())}
+          shiftDate={ctrl.shiftDate}
+          handleSendChat={() => ctrl.chatMutation.mutate()}
+          chatSummary={ctrl.chatSummary}
+          chatTone={ctrl.chatTone}
+          setChatTone={ctrl.setChatTone}
+          chatHistory={ctrl.chatHistory}
+          chatInput={ctrl.chatInput}
+          setChatInput={ctrl.setChatInput}
+          clarifyPrompt={ctrl.clarifyPrompt}
+          pendingMessage={ctrl.pendingMessage}
+          confirmSendPending={ctrl.confirmSendPending}
+          setClarifyPrompt={ctrl.setClarifyPrompt}
+          setPendingMessage={ctrl.setPendingMessage}
+          summaryText={ctrl.summaryText}
+          chatMutationLoading={ctrl.chatMutation.status === "pending"}
+          showAgendaCard={false}
+        />
+      </section>
 
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">

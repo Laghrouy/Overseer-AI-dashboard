@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     ]
     allow_origin_regex: str = r"^https://overseer-ai-dashboard([.-][\w-]+)?\.vercel\.app$"
     model_config = SettingsConfigDict(env_file=".env")
+    dev_feedback_alert_email: str | None = None
 
 
 class TokenPayload(BaseModel):

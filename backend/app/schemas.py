@@ -359,6 +359,25 @@ class FeedbackStats(BaseModel):
     habit_windows: list[FeedbackHabitWindow]
 
 
+class FeedbackCommentCreate(BaseModel):
+    category: Literal["suggestion", "bug", "question", "autre"]
+    summary: str
+    details: str
+    reproduction: Optional[str] = None
+    contact: Optional[str] = None
+
+
+class FeedbackCommentRead(BaseModel):
+    id: str
+    owner_id: int
+    category: Literal["suggestion", "bug", "question", "autre"]
+    summary: str
+    details: str
+    reproduction: Optional[str] = None
+    contact: Optional[str] = None
+    created_at: datetime
+
+
 class AutomationRequest(BaseModel):
     action: Literal["script", "api", "file", "message", "webhook"]
     target: str | None = None

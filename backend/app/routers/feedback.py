@@ -1,11 +1,22 @@
 from datetime import datetime, time, timedelta, timezone
 from collections import defaultdict
+import logging
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from ..config import Settings
 from ..deps import get_current_user, get_db
-from ..schemas import FeedbackEstimateAdjustment, FeedbackHabitWindow, FeedbackStats
+from ..schemas import (
+    FeedbackCommentCreate,
+    FeedbackCommentRead,
+    FeedbackEstimateAdjustment,
+    FeedbackHabitWindow,
+    FeedbackStats,
+)
 router = APIRouter(prefix="/feedback", tags=["feedback"])
+settings = Settings()
+logger = logging.getLogger(__name__)
 
 
 def _period_bounds(anchor: datetime, scope: str) -> tuple[datetime, datetime]:
@@ -135,3 +146,44 @@ async def feedback_loop(
         estimate_adjustments=adjustments,
         habit_windows=habit_windows,
     )
+
+
+@router.post("/comments", response_model=FeedbackCommentRead, status_code=status.HTTP_201_CREATED)
+async def submit_dev_comment(
+    payload: FeedbackCommentCreate,
+    session=Depends(get_db),
+    user=Depends(get_current_user),
+):
+    now = datetime.now(timezone.utc)
+    record = payload.dict()
+    record.update({"owner_id": user["id"], "created_at": now})
+    result = await session["dev_comments"].insert_one(record)
+    record["id"] = str(result.inserted_id)
+    logger.info("Dev comment received from %s (category=%s)", user.get("email"), payload.category)
+    _alert_priority_comment(payload, user)
+    return FeedbackCommentRead(**record)
+
+
+def _alert_priority_comment(payload: FeedbackCommentCreate, user: dict):
+    if payload.category != "bug":
+        return
+    alert_email = settings.dev_feedback_alert_email
+    message = f"Priorité : bug signalé par {user.get('email')} ({user.get('id')})"
+    logger.warning("%s - summary=%s", message, payload.summary)
+    if alert_email:
+        logger.info("Envoi d'une alerte e-mail à %s pour le commentaire prioritaire.", alert_email)
+
+
+@router.get("/comments", response_model=list[FeedbackCommentRead])
+async def list_dev_comments(
+    limit: int = Query(50, ge=1, le=200),
+    category: Literal["suggestion", "bug", "question", "autre"] | None = Query(None),
+    session=Depends(get_db),
+    user=Depends(get_current_user),
+):
+    query: dict[str, str] = {}
+    if category:
+        query["category"] = category
+    cursor = session["dev_comments"].find(query).sort("created_at", -1).limit(limit)
+    documents = await cursor.to_list(length=None)
+    return [FeedbackCommentRead(**{**doc, "id": str(doc["_id"])}) for doc in documents]

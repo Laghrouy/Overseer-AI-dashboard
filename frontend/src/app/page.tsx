@@ -3005,7 +3005,7 @@ function HomeContent() {
           </>
         )}
 
-        {(view === "agenda" || view === "agent") && (
+        {(isDashboard || view === "agenda" || view === "agent") && (
           <AgendaChatView
             token={token}
             selectedDate={selectedDate}
@@ -3039,6 +3039,7 @@ function HomeContent() {
             setPendingMessage={setPendingMessage}
             summaryText={summaryText}
             chatMutationLoading={chatMutation.status === "pending"}
+            layout={isDashboard ? "row" : "column"}
           />
         )}
 
