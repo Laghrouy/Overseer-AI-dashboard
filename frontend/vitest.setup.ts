@@ -1,16 +1,11 @@
 import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
 
-type MutableURL = {
-	createObjectURL: (object: Blob | MediaSource) => string;
-	revokeObjectURL: (url: string) => void;
-};
-
-const globalWithURL = globalThis as typeof globalThis & { URL?: Partial<MutableURL> };
+const globalWithURL = globalThis as typeof globalThis & { URL?: typeof URL };
 
 // Polyfill minimal pour URL.createObjectURL / revokeObjectURL dans JSDOM
 if (!globalWithURL.URL) {
-	globalWithURL.URL = {};
+	globalWithURL.URL = {} as typeof URL;
 }
 
 if (!globalWithURL.URL.createObjectURL) {

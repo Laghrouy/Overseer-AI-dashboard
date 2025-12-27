@@ -5,6 +5,7 @@
 import { CalendarClock, MessageCircle, Sparkles } from "lucide-react";
 import { CardContainer } from "../ui";
 import type { AgendaEvent, ChatMessage } from "@/lib/types";
+import type { UseMutationResult } from "@tanstack/react-query";
 
 export function AgendaChatView(props: {
   token?: string | null;
@@ -20,13 +21,13 @@ export function AgendaChatView(props: {
   setShowSearchModal: (v: boolean) => void;
   handleIcsUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   importIcsLoading: boolean;
-  exportIcs: { mutate: () => void; isLoading: boolean };
+  exportIcs: UseMutationResult<Blob, Error, void, unknown>;
   handleDeleteEvent: (id: string) => void;
   openEditModal: (event: AgendaEvent) => void;
   setViewModeDay: () => void;
   shiftDate: (mode: "jour" | "semaine" | "mois" | "annee" | "liste", delta: number) => void;
   handleSendChat: () => void;
-  chatSummary: { mutate: () => void; isLoading: boolean };
+  chatSummary: UseMutationResult<{ summary: string }, Error, void, unknown>;
   chatTone: "formel" | "detendu";
   setChatTone: (v: "formel" | "detendu") => void;
   chatHistory: ChatMessage[];
@@ -93,7 +94,7 @@ export function AgendaChatView(props: {
             {importIcsLoading ? <span>Import en cours...</span> : null}
             <button
               onClick={() => exportIcs.mutate()}
-              disabled={!token || exportIcs.isLoading}
+              disabled={!token || exportIcs.status === "pending"}
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 font-semibold transition hover:border-slate-300 hover:shadow-sm disabled:opacity-60"
             >
               Exporter agenda
@@ -174,7 +175,7 @@ export function AgendaChatView(props: {
             </div>
             <button
               onClick={() => chatSummary.mutate()}
-              disabled={!token || chatSummary.isLoading}
+              disabled={!token || chatSummary.status === "pending"}
               className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-800 hover:border-slate-300 disabled:opacity-60"
             >
               Résumer

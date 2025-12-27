@@ -212,7 +212,7 @@ export function LinksView(props: {
         <div className="flex items-center justify-between text-xs text-slate-600">
           <p className="text-[11px] font-semibold">Vos sites favoris en tuiles.</p>
           <button
-            onClick={() => setShowQuickLinkForm((v) => !v)}
+            onClick={() => setShowQuickLinkForm(!showQuickLinkForm)}
             className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-800 hover:border-slate-300"
           >
             <Plus className="h-3.5 w-3.5" />

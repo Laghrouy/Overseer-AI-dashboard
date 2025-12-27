@@ -118,7 +118,7 @@ export default function AgendaPage() {
           </label>
           <button
             onClick={() => ctrl.exportIcs.mutate()}
-            disabled={!ctrl.token || ctrl.exportIcs.status === "loading"}
+            disabled={!ctrl.token || ctrl.exportIcs.status === "pending"}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm disabled:opacity-60"
           >
             Exporter
@@ -200,7 +200,7 @@ export default function AgendaPage() {
             setShowAddModal={setShowAddModal}
             setShowSearchModal={() => {}}
             handleIcsUpload={ctrl.handleIcsUpload}
-            importIcsLoading={ctrl.importIcs.isLoading}
+            importIcsLoading={ctrl.importIcs.status === "pending"}
             exportIcs={ctrl.exportIcs}
             handleDeleteEvent={ctrl.handleDeleteEvent}
             openEditModal={openEdit}
@@ -219,7 +219,7 @@ export default function AgendaPage() {
             setClarifyPrompt={ctrl.setClarifyPrompt}
             setPendingMessage={ctrl.setPendingMessage}
             summaryText={ctrl.summaryText}
-            chatMutationLoading={ctrl.chatMutation.isLoading}
+            chatMutationLoading={ctrl.chatMutation.status === "pending"}
           />
         </section>
       </div>
@@ -272,7 +272,7 @@ export default function AgendaPage() {
                 </button>
                 <button
                   onClick={saveEvent}
-                  disabled={ctrl.createEvent.isLoading || ctrl.updateEvent.isLoading}
+                  disabled={ctrl.createEvent.status === "pending" || ctrl.updateEvent.status === "pending"}
                   className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
                 >
                   {editingEvent ? "Mettre à jour" : "Créer"}

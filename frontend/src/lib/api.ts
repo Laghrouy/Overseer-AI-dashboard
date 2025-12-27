@@ -63,7 +63,7 @@ type AgentPlanResponse = {
   rationale: string;
 };
 type AgentChatResponse = { reply: string };
-type UserPreference = {
+export type UserPreference = {
   productive_hours?: Array<{ start?: string; end?: string }>;
   daily_load_limit_hours?: number | null;
   session_duration_minutes?: number | null;
@@ -148,6 +148,7 @@ type CreateTaskPayload = {
   dependencies?: number[] | null;
   order_index?: number | null;
   project_id?: number | null;
+  description?: string;
 };
 type UpdateTaskPayload = Partial<CreateTaskPayload> & { status?: ApiTask["status"] };
 type UpdateProjectMilestonesPayload = {

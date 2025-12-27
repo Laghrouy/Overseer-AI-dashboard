@@ -3,6 +3,8 @@
 /* eslint-disable react/no-unescaped-entities */
 
 import { CalendarClock, Sparkles } from "lucide-react";
+import type { UseMutationResult } from "@tanstack/react-query";
+import type { UserPreference } from "@/lib/api";
 import { CardContainer } from "../ui";
 
 export function PreferencesView(props: {
@@ -20,7 +22,7 @@ export function PreferencesView(props: {
   setPrefSession: (v: string) => void;
   setPrefDaysOff: (v: string) => void;
   setPrefPainfulTasks: (v: string) => void;
-  updatePreferences: { mutate: () => void; isLoading: boolean };
+  updatePreferences: UseMutationResult<UserPreference, Error, void, unknown>;
   historyLoading: boolean;
   historyData?: {
     tasks: unknown[];
@@ -137,12 +139,12 @@ export function PreferencesView(props: {
           <div className="flex items-center gap-2">
             <button
               onClick={() => updatePreferences.mutate()}
-              disabled={!token || updatePreferences.isLoading}
+              disabled={!token || updatePreferences.status === "pending"}
               className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-60"
             >
               Enregistrer
             </button>
-            {updatePreferences.isLoading ? <span className="text-xs text-slate-600">Enregistrement...</span> : null}
+            {updatePreferences.status === "pending" ? <span className="text-xs text-slate-600">Enregistrement...</span> : null}
           </div>
         </div>
       </CardContainer>

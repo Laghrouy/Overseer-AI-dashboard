@@ -121,6 +121,7 @@ type QuickLink = { id: string; title: string; url: string };
 type PlanReason = "" | "retard" | "imprevu" | "annulation" | "report" | "optimisation";
 type CreateEventInput = Parameters<typeof apiCreateEvent>[1];
 const eventCategories = ["general", "travail", "perso", "sante", "administratif", "tache"] as const;
+const blockerStatusOptions = ["ouvert", "en_cours", "bloque", "resolu"] as const;
 export function DashboardPage({ view }: { view: DashboardView }) {
   return (
     <DashboardViewContext.Provider value={view}>
@@ -488,10 +489,28 @@ function HomeContent() {
       .map((item) => item.trim())
       .filter(Boolean);
 
-  const blockerStatusOptions = ["ouvert", "en_cours", "bloque", "resolu"] as const;
-
   const removeNewMilestone = (id: string) => {
     setNewProjectMilestones((prev) => prev.filter((m) => (m.id || m.title) !== id));
+  };
+
+  const addNewMilestone = () => {
+    if (!newMilestoneTitle || !newMilestoneStart || !newMilestoneEnd) return false;
+    const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+    setNewProjectMilestones((prev) => [
+      ...prev,
+      {
+        id,
+        title: newMilestoneTitle,
+        start: newMilestoneStart,
+        end: newMilestoneEnd,
+        level: newMilestoneLevel || undefined,
+      },
+    ]);
+    setNewMilestoneTitle("");
+    setNewMilestoneStart("");
+    setNewMilestoneEnd("");
+    setNewMilestoneLevel("");
+    return true;
   };
 
   const triggerDownload = useCallback((blob: Blob, filename: string) => {
@@ -602,6 +621,54 @@ function HomeContent() {
     onError: (err) => setActionStatus(`Suppression tâche: ${(err as Error).message}`),
   });
 
+  const updateProjectMilestones = useMutation({
+    mutationFn: (payload: { projectId: string; milestones: ProjectMilestone[] }) => {
+      if (!token) throw new Error("Authentification requise");
+      return apiUpdateProjectMilestones(token, Number(payload.projectId), { milestones_dates: payload.milestones });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects", token] }),
+    onError: (err) => setActionStatus(`Maj jalons: ${(err as Error).message}`),
+  });
+
+  const updateProjectMeta = useMutation({
+    mutationFn: (payload: { projectId: string; data: Partial<Project> }) => {
+      if (!token) throw new Error("Authentification requise");
+      return apiUpdateProject(token, Number(payload.projectId), payload.data);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["projects", token] }),
+    onError: (err) => setActionStatus(`Maj projet: ${(err as Error).message}`),
+  });
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: (projectId: string) => {
+      if (!token) throw new Error("Authentification requise");
+      return apiDeleteProject(token, Number(projectId));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects", token] });
+      setActiveProject(null);
+    },
+    onError: (err) => setActionStatus(`Suppression projet: ${(err as Error).message}`),
+  });
+
+  const resolveBlockerQuick = useCallback(
+    (project: Project, blockerId: string) => {
+      if (!token) {
+        setActionStatus("Connectez-vous pour gérer les blocages de projet.");
+        return;
+      }
+      const updatedBlockers = (project.blockers ?? []).map((blocker, index) => {
+        const key = blocker.id || `${blocker.title}-${index}`;
+        if (key === blockerId) {
+          return { ...blocker, status: "resolu" };
+        }
+        return blocker;
+      });
+      updateProjectMeta.mutate({ projectId: project.id, data: { blockers: updatedBlockers } });
+    },
+    [token, updateProjectMeta]
+  );
+
   const createEventQuick = useMutation({
     mutationFn: (payload: CreateEventInput) => apiCreateEvent(token as string, payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["events", token] }),
@@ -658,6 +725,7 @@ function HomeContent() {
       start: string;
       end: string;
       kind: AgendaEvent["type"];
+      category?: string | null;
       note?: string | null;
       description?: string | null;
       location?: string | null;
@@ -676,6 +744,7 @@ function HomeContent() {
         start: payload.start,
         end: payload.end,
         kind: payload.kind,
+        category: payload.category ?? null,
         description: payload.description ?? null,
         note: payload.note ?? null,
         location: payload.location ?? null,
@@ -1439,7 +1508,7 @@ function HomeContent() {
   }, [checkInMood, dailyGoalsDone, feedbackStats.completion_rate, feedbackStats.deferred_tasks.length, loadHours, overloadLimit, pendingTasks]);
 
   const synthActions = useMemo(() => {
-    const actions: Array<{ title: string; detail: string; onClick?: () => void }> = [];
+    const actions: Array<{ title: string; detail: string; onClick: () => void }> = [];
     if (overdueTasks.length) {
       actions.push({ title: "Replanifier les retards", detail: `${overdueTasks.length} tâche(s) en retard`, onClick: () => setViewMode("jour") });
     }
@@ -1836,10 +1905,10 @@ function HomeContent() {
               <Sparkles className="h-4 w-4" />
               Importer un ICS
             </label>
-            {importIcs.isLoading ? <span>Import en cours...</span> : null}
+            {importIcs.status === "pending" ? <span>Import en cours...</span> : null}
             <button
               onClick={handleExportIcs}
-              disabled={!token || exportIcs.isLoading}
+              disabled={!token || exportIcs.status === "pending"}
               className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 font-semibold transition hover:border-slate-300 hover:shadow-sm disabled:opacity-60"
             >
               Exporter agenda
@@ -1946,7 +2015,7 @@ function HomeContent() {
             </div>
             <button
               onClick={() => chatSummary.mutate()}
-              disabled={!token || chatSummary.isLoading}
+              disabled={!token || chatSummary.status === "pending"}
               className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-800 hover:border-slate-300 disabled:opacity-60"
             >
               Résumer
@@ -1994,7 +2063,7 @@ function HomeContent() {
             ) : null}
             <button
               onClick={() => handleSendChat()}
-              disabled={!token || !chatInput.trim() || chatMutation.isLoading}
+              disabled={!token || !chatInput.trim() || chatMutation.status === "pending"}
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 transition hover:border-slate-300 hover:shadow-sm disabled:opacity-60"
             >
               <Sparkles className="h-4 w-4" />
@@ -2950,7 +3019,7 @@ function HomeContent() {
             setShowAddModal={setShowAddModal}
             setShowSearchModal={setShowSearchModal}
             handleIcsUpload={handleIcsUpload}
-            importIcsLoading={importIcs.isLoading}
+            importIcsLoading={importIcs.status === "pending"}
             exportIcs={exportIcs}
             handleDeleteEvent={handleDeleteEvent}
             openEditModal={openEditModal}
@@ -2969,7 +3038,7 @@ function HomeContent() {
             setClarifyPrompt={setClarifyPrompt}
             setPendingMessage={setPendingMessage}
             summaryText={summaryText}
-            chatMutationLoading={chatMutation.isLoading}
+            chatMutationLoading={chatMutation.status === "pending"}
           />
         )}
 
@@ -2986,7 +3055,7 @@ function HomeContent() {
             newSubjectDesc={newSubjectDesc}
             setNewSubjectDesc={setNewSubjectDesc}
             onCreateSubject={() => createStudySubject.mutate()}
-            createSubjectLoading={createStudySubject.isLoading}
+            createSubjectLoading={createStudySubject.status === "pending"}
             onUpdateSubject={(payload) => updateStudySubject.mutate(payload)}
             onDeleteSubject={(id) => deleteStudySubject.mutate(id)}
             planSubjectId={planSubjectId}
@@ -3000,7 +3069,7 @@ function HomeContent() {
             planSessionMinutes={planSessionMinutes}
             setPlanSessionMinutes={setPlanSessionMinutes}
             onGeneratePlan={() => generateStudyPlan.mutate()}
-            generatePlanLoading={generateStudyPlan.isLoading}
+            generatePlanLoading={generateStudyPlan.status === "pending"}
             studyPlans={studyPlans}
             onUpdatePlan={(payload) => updateStudyPlan.mutate(payload)}
             onDeletePlan={(id) => deleteStudyPlan.mutate(id)}
@@ -3014,7 +3083,7 @@ function HomeContent() {
             newCardBack={newCardBack}
             setNewCardBack={setNewCardBack}
             onCreateCard={(payload) => createStudyCard.mutate(payload)}
-            createCardLoading={createStudyCard.isLoading}
+            createCardLoading={createStudyCard.status === "pending"}
             studyCardsDue={studyCardsDue}
             studyCardsDueFetching={studyCardsDueQuery.isFetching}
             onReviewCard={(payload) => reviewStudyCard.mutate(payload)}
@@ -3031,7 +3100,7 @@ function HomeContent() {
             assistItems={assistItems}
             setAssistItems={setAssistItems}
             onRunAssist={() => runStudyAssist.mutate()}
-            runAssistLoading={runStudyAssist.isLoading}
+            runAssistLoading={runStudyAssist.status === "pending"}
             assistOutput={assistOutput ?? ""}
           />
         )}
@@ -3081,14 +3150,14 @@ function HomeContent() {
             onMoveTask={(taskId, status) => updateTaskStatus.mutate({ taskId, status })}
             onPlanTask={(task) => planTaskToEvent(task)}
             onUpdateMilestones={(milestones) => updateProjectMilestones.mutate({ projectId: activeProject.id, milestones })}
-            savingMilestones={updateProjectMilestones.isLoading}
+            savingMilestones={updateProjectMilestones.status === "pending"}
             onAddTask={(title, deadline) => createProjectTask.mutate({ projectId: activeProject.id, title, deadline })}
-            savingTask={createProjectTask.isLoading}
+            savingTask={createProjectTask.status === "pending"}
             onDeleteTask={(taskId) => handleDeleteTask(taskId)}
             onUpdateMeta={(data) => updateProjectMeta.mutate({ projectId: activeProject.id, data })}
-            savingMeta={updateProjectMeta.isLoading}
+            savingMeta={updateProjectMeta.status === "pending"}
             onDeleteProject={() => deleteProjectMutation.mutate(activeProject.id)}
-            deletingProject={deleteProjectMutation.isLoading}
+            deletingProject={deleteProjectMutation.status === "pending"}
           />
         ) : null}
 
@@ -3258,10 +3327,10 @@ function HomeContent() {
                 </button>
                 <button
                   onClick={() => createProject.mutate()}
-                  disabled={!newProjectName || createProject.isLoading}
+                  disabled={!newProjectName || createProject.status === "pending"}
                   className="rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
                 >
-                  {createProject.isLoading ? "Ajout..." : "Créer"}
+                  {createProject.status === "pending" ? "Ajout..." : "Créer"}
                 </button>
               </div>
             </div>
@@ -3511,10 +3580,10 @@ function HomeContent() {
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
                 <button
                   onClick={() => handleDeleteEvent(editingEvent.id)}
-                  disabled={agendaDeleteEvent.isLoading}
+                  disabled={agendaDeleteEvent.status === "pending"}
                   className="rounded-md bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 shadow-sm transition hover:bg-rose-100 disabled:opacity-60"
                 >
-                  {agendaDeleteEvent.isLoading ? "Suppression..." : "Supprimer"}
+                  {agendaDeleteEvent.status === "pending" ? "Suppression..." : "Supprimer"}
                 </button>
                 <div className="flex gap-2">
                   <button
@@ -3525,7 +3594,7 @@ function HomeContent() {
                   </button>
                   <button
                     onClick={submitEdit}
-                    disabled={!editTitle || !editStart || !editEnd || updateEvent.isLoading}
+                    disabled={!editTitle || !editStart || !editEnd || updateEvent.status === "pending"}
                     className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
                   >
                     Enregistrer
@@ -3672,7 +3741,7 @@ function HomeContent() {
                     createEvent.mutate();
                     setShowAddModal(false);
                   }}
-                  disabled={!newEventTitle || !newEventStart || !newEventEnd || createEvent.isLoading}
+                  disabled={!newEventTitle || !newEventStart || !newEventEnd || createEvent.status === "pending"}
                   className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-60"
                 >
                   Ajouter
@@ -3790,7 +3859,7 @@ function HomeContent() {
                 </button>
                 <button
                   onClick={() => createTask.mutate()}
-                  disabled={!newTaskTitle || createTask.isLoading}
+                  disabled={!newTaskTitle || createTask.status === "pending"}
                   className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60"
                 >
                   Créer la tâche
@@ -4316,7 +4385,11 @@ function ProjectModal({
     setShowEditMilestoneModal(false);
     setEditingMilestoneId(null);
   }, [project.id, milestonesDated]);
-  const risks = (project.risks ?? []).length ? (project.risks ?? []) : buildRisks(project, tasks);
+  const apiRisks = (project.risks ?? []).map((risk) => ({
+    ...risk,
+    badge: riskBadgeClass(risk.level),
+  }));
+  const risks = apiRisks.length ? apiRisks : buildRisks(project, tasks);
   const decisions = (project.decisions ?? []).length ? (project.decisions ?? []) : buildDecisions(project);
   const notifications = (project.notifications ?? []).length ? (project.notifications ?? []) : buildNotifications(project, milestones, tasks);
   const sortedMilestones = milestones.slice().sort((a, b) => a.localeCompare(b));
@@ -5307,6 +5380,17 @@ function riskScore(project: Project) {
   if (hasHigh) return 3;
   if (risks.length) return 2;
   return project.progress < 40 ? 1 : 0;
+}
+
+function riskBadgeClass(level?: string) {
+  const normalized = (level ?? "").toLowerCase();
+  if (normalized.includes("haut") || normalized.includes("eleve") || normalized.includes("risque") || normalized.includes("critique")) {
+    return "bg-amber-100 text-amber-700";
+  }
+  if (normalized.includes("surveillance") || normalized.includes("moyen")) {
+    return "bg-blue-100 text-blue-700";
+  }
+  return "bg-slate-100 text-slate-700";
 }
 
 function buildRisks(project: Project, tasks: Task[]) {

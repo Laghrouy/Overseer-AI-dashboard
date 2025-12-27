@@ -9,6 +9,7 @@ interface AuthState {
   setToken: (value?: string) => void;
   setEmail: (value?: string) => void;
   clear: () => void;
+  clearAuth: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -19,6 +20,7 @@ export const useAuthStore = create<AuthState>()(
       setToken: (value) => set({ token: value }),
       setEmail: (value) => set({ email: value }),
       clear: () => set({ token: undefined, email: undefined }),
+      clearAuth: () => set({ token: undefined, email: undefined }),
     }),
     { name: "overseer-auth" }
   )

@@ -143,9 +143,14 @@ export function useAgendaController() {
   const [summaryText, setSummaryText] = useState<string | null>(null);
 
   const chatMutation = useMutation({
-    mutationFn: () => apiAgentChat(token as string, { message: chatInput, history: chatHistory }),
+    mutationFn: () => apiAgentChat(token as string, chatInput, chatTone, { history: chatHistory }),
     onSuccess: (reply) => {
-      setChatHistory((prev) => [...prev, { id: crypto.randomUUID(), role: "user", content: chatInput }, { id: crypto.randomUUID(), role: "assistant", content: reply.reply }]);
+      const now = new Date().toISOString();
+      setChatHistory((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), role: "user", content: chatInput, createdAt: now },
+        { id: crypto.randomUUID(), role: "assistant", content: reply.reply, createdAt: now },
+      ]);
       setChatInput("");
     },
   });
@@ -184,7 +189,7 @@ export function useAgendaController() {
     token,
     eventsQuery,
     eventsData: filteredEvents,
-    eventsLoading: eventsQuery.isLoading,
+    eventsLoading: eventsQuery.status === "pending",
     selectedDate,
     setSelectedDate,
     viewMode,
