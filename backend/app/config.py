@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     llm_api_base: str = "https://api.openai.com/v1"
     llm_model: str = "gpt-4o-mini"
+    allowed_origins: list[str] = [
+        "https://overseer-ai-dashboard.vercel.app",
+        "https://overseer-ai-dashboard-94cetepo9-yacinelghs-projects.vercel.app",
+        "https://overseer-ai-dashboard.onrender.com",
+        "http://localhost:3000",
+    ]
     model_config = SettingsConfigDict(env_file=".env")
 
 
