@@ -14,10 +14,10 @@ class Settings(BaseSettings):
     llm_model: str = "gpt-4o-mini"
     allowed_origins: list[str] = [
         "https://overseer-ai-dashboard.vercel.app",
-        "https://overseer-ai-dashboard-94cetepo9-yacinelghs-projects.vercel.app",
         "https://overseer-ai-dashboard.onrender.com",
         "http://localhost:3000",
     ]
+    allow_origin_regex: str = r"^https://overseer-ai-dashboard([.-][\w-]+)?\.vercel\.app$"
     model_config = SettingsConfigDict(env_file=".env")
 
 
