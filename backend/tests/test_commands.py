@@ -3,7 +3,7 @@ import pytest
 from tests.test_tasks import register_and_login
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_command_success(client):
     headers = await register_and_login(client)
 
@@ -14,7 +14,7 @@ async def test_command_success(client):
     assert "deploy staging" in data["output"]
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_command_empty_rejected(client):
     headers = await register_and_login(client)
 

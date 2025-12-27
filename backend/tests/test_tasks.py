@@ -11,7 +11,7 @@ async def register_and_login(client):
     return {"Authorization": f"Bearer {token}"}
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_task_crud(client):
     headers = await register_and_login(client)
 
@@ -39,7 +39,7 @@ async def test_task_crud(client):
     assert res.status_code == 204
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_task_dependencies_and_parent(client):
     headers = await register_and_login(client)
     # parent task

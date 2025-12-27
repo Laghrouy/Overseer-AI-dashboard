@@ -19,7 +19,7 @@ def iso_in(minutes: int) -> str:
     return (datetime.now(timezone.utc) + timedelta(minutes=minutes)).isoformat()
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_event_crud(client):
     headers = await auth_headers(client)
     payload = {

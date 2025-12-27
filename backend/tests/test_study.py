@@ -20,7 +20,7 @@ def in_days(days: int) -> str:
     return (datetime.now(timezone.utc) + timedelta(days=days)).isoformat()
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_study_plan_and_sessions(client):
     headers = await auth_headers(client)
 
@@ -58,7 +58,7 @@ async def test_study_plan_and_sessions(client):
         assert upd.status_code == 200
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_study_subject_and_plan_update_delete(client):
     headers = await auth_headers(client)
 
@@ -117,7 +117,7 @@ async def test_study_subject_and_plan_update_delete(client):
     assert del_subj.status_code == 204
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_study_cards_and_review(client):
     headers = await auth_headers(client)
     subj_res = await client.post("/api/study/subjects", json={"name": "Physique"}, headers=headers)
@@ -141,7 +141,7 @@ async def test_study_cards_and_review(client):
     assert data["streak"] >= 0
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_study_assist(client):
     headers = await auth_headers(client)
     res = await client.post(

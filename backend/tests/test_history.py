@@ -16,7 +16,7 @@ def iso_in(minutes: int) -> str:
     return (datetime.now(timezone.utc) + timedelta(minutes=minutes)).isoformat()
 
 
-@pytest.mark.anyio
+@pytest.mark.asyncio
 async def test_history_aggregates_data(client):
     headers = await auth_headers(client)
 
