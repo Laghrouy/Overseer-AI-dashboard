@@ -118,7 +118,7 @@ export default function AgendaPage() {
           </label>
           <button
             onClick={() => ctrl.exportIcs.mutate()}
-            disabled={!ctrl.token || ctrl.exportIcs.isLoading}
+            disabled={!ctrl.token || ctrl.exportIcs.status === "loading"}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm disabled:opacity-60"
           >
             Exporter
